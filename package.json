@@ -1,0 +1,52 @@
+{
+  "name": "watcha-backend",
+  "version": "1.0.0",
+  "description": "WATCHA Production Remote Backend Service",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "keywords": [
+    "watcha",
+    "streaming",
+    "backend",
+    "render",
+    "tmdb",
+    "stremio"
+  ],
+  "author": "WATCHA Team",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "ioredis": "^5.5.0",
+    "pino": "^9.6.0",
+    "pino-http": "^10.4.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.4",
+    "@types/supertest": "^6.0.2",
+    "pino-pretty": "^13.0.0",
+    "rimraf": "^6.0.1",
+    "supertest": "^7.0.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

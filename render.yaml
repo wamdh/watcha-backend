@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: watcha-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+      - key: TMDB_READ_ACCESS_TOKEN
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: REDIS_URL
+        sync: false
+      - key: DEFAULT_STREMIO_ADDON_URL
+        value: "https://torrentio.strem.fun/manifest.json"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "60000"
+      - key: RATE_LIMIT_MAX
+        value: "120"
