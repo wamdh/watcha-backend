@@ -58,6 +58,16 @@ export function createApp(): Express {
   // Rate Limiting
   app.use('/api/', apiRateLimiter);
 
+  // Root greeting endpoint
+  app.get('/', (_req, res) => {
+    res.status(200).json({
+      name: 'WATCHA Backend API',
+      version: '1.0.0',
+      status: 'running',
+      healthCheck: '/api/v1/health',
+    });
+  });
+
   // Render health check aliases
   app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'ok', service: 'watcha-backend' });
