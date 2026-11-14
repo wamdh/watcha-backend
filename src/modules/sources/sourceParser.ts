@@ -1,36 +1,42 @@
-import { ParsedSource, SourceType } from '../../shared/types.js';
+import { ParsedSource, SourceType, SourceKind } from '../../shared/types.js';
 import { StremioStreamRaw } from '../addons/addonClient.js';
 
 export class SourceParser {
   static parseStream(raw: StremioStreamRaw, index: number, providerName = 'Addon'): ParsedSource {
-    const combined = `${raw.name || ''} ${raw.title || ''}`;
+    const rawName = raw.name || '';
+    const rawTitle = raw.title || '';
+    const combined = `${rawName} ${rawTitle}`;
 
-    // 1. Detect Source Type
+    // 1. Detect Source Type & Kind
     let sourceType: SourceType = 'unsupported';
+    let kind: SourceKind = 'unsupported';
     let isPlayable = false;
 
     if (raw.url && /^https?:\/\//i.test(raw.url)) {
       sourceType = 'direct';
+      kind = 'direct_url';
       isPlayable = true;
     } else if (raw.infoHash && /^[a-fA-F0-9]{40}$/i.test(raw.infoHash)) {
       sourceType = 'torrent';
+      kind = 'torrent';
       isPlayable = true;
     }
 
     // 2. Resolution & Quality Badge
-    let resolution = 'HD';
-    let qualityBadge = 'HD 720p';
+    let resolution = '720p';
+    let qualityBadge = '720p HD';
 
-    if (/4k|2160p|uhd/i.test(combined)) {
+    // Prioritize explicit tag in name (e.g. Torrentio\n1080p) or clear token
+    if (/\b(4k|2160p|uhd)\b/i.test(rawName) || (/\b(4k|2160p|uhd)\b/i.test(rawTitle) && !/RM4K/i.test(rawTitle))) {
       resolution = '4K';
       qualityBadge = '4K UHD';
-    } else if (/1080p|fhd/i.test(combined)) {
+    } else if (/\b(1080p|fhd)\b/i.test(rawName) || /\b(1080p|fhd)\b/i.test(rawTitle)) {
       resolution = '1080p';
       qualityBadge = '1080p FHD';
-    } else if (/720p|hd/i.test(combined)) {
+    } else if (/\b(720p|hd)\b/i.test(rawName) || /\b(720p|hd)\b/i.test(rawTitle)) {
       resolution = '720p';
       qualityBadge = '720p HD';
-    } else if (/480p|sd/i.test(combined)) {
+    } else if (/\b(480p|sd)\b/i.test(combined)) {
       resolution = '480p';
       qualityBadge = '480p SD';
     } else if (/cam|ts|telesync/i.test(combined)) {
@@ -38,40 +44,48 @@ export class SourceParser {
       qualityBadge = 'CAM';
     }
 
-    // 3. Codec
+    // 3. HDR / Dolby Vision
+    let hdr: string | undefined;
+    if (/dolby\s*vision|\bdv\b/i.test(combined)) {
+      hdr = 'Dolby Vision';
+    } else if (/hdr10\+|hdr10|\bhdr\b/i.test(combined)) {
+      hdr = 'HDR10';
+    }
+
+    // 4. Codec
     let codec = 'x264';
-    if (/hevc|x265|h\.265/i.test(combined)) {
+    if (/hevc|x265|h\.?265/i.test(combined)) {
       codec = 'HEVC/x265';
     } else if (/av1/i.test(combined)) {
       codec = 'AV1';
-    } else if (/x264|h\.264/i.test(combined)) {
+    } else if (/x264|h\.?264|avc/i.test(combined)) {
       codec = 'x264';
     }
 
-    // 4. Audio
+    // 5. Audio
     let audio = 'Stereo';
     if (/atmos/i.test(combined)) {
       audio = 'Dolby Atmos';
     } else if (/7\.1/i.test(combined)) {
       audio = '7.1 Surround';
-    } else if (/5\.1|ddp5\.1|ac3/i.test(combined)) {
+    } else if (/5\.1|ddp5\.1|ac3|dts/i.test(combined)) {
       audio = '5.1 Surround';
     }
 
-    // 5. Seeders & Peers
+    // 6. Seeders & Peers
     let seeders = 0;
     const seedersMatch = combined.match(/[👤⚙]\s*(\d+)/i) || combined.match(/(\d+)\s*(?:seeds?|seeders?)/i);
     if (seedersMatch && seedersMatch[1]) {
       seeders = parseInt(seedersMatch[1], 10);
     }
 
-    // 6. File size text & bytes
+    // 7. File size text & bytes
     let fileSizeText = 'غير محدد';
     let fileSizeBytes = raw.behaviorHints?.videoSize || 0;
 
     const sizeMatch = combined.match(/💾\s*([\d\.]+\s*(?:GB|MB|GiB|MiB))/i) || combined.match(/([\d\.]+\s*(?:GB|MB|GiB|MiB))/i);
     if (sizeMatch && sizeMatch[1]) {
-      fileSizeText = sizeMatch[1].toUpperCase();
+      fileSizeText = sizeMatch[1].toUpperCase().replace('GIB', 'GB').replace('MIB', 'MB');
       const num = parseFloat(sizeMatch[1]);
       if (/GB|GIB/i.test(sizeMatch[1])) {
         fileSizeBytes = Math.round(num * 1024 * 1024 * 1024);
@@ -80,26 +94,39 @@ export class SourceParser {
       }
     }
 
-    const cleanTitle = (raw.title || raw.name || `Source #${index + 1}`)
-      .replace(/\n/g, ' ')
-      .trim();
+    // 8. Clean title (file name without emojis/stats)
+    const rawClean = (raw.title || raw.name || `Source #${index + 1}`).replace(/\n/g, ' ').trim();
+    const strippedTitle = rawClean.split(/[👤💾⚙]/)[0].trim() || rawClean;
+
+    // 9. Content Type
+    let contentType: 'hls' | 'mp4' | 'other_supported' = 'mp4';
+    if (raw.url?.toLowerCase().includes('.m3u8')) {
+      contentType = 'hls';
+    }
 
     return {
       id: `src_${sourceType}_${index}_${raw.infoHash || Math.random().toString(36).substring(2, 8)}`,
       sourceType,
+      kind,
       provider: providerName,
+      providerName,
       name: raw.name || providerName,
-      title: cleanTitle,
+      title: strippedTitle,
+      rawTitle: rawClean,
       resolution,
       qualityBadge,
+      resolutionLabel: qualityBadge,
       codec,
       audio,
+      hdr,
       fileSizeText,
+      fileSize: fileSizeText,
       fileSizeBytes,
       seeders,
       peers: 0,
       isPlayable,
-      ...(raw.url ? { streamUrl: raw.url } : {}),
+      contentType,
+      ...(raw.url ? { streamUrl: raw.url, directUrl: raw.url } : {}),
       ...(raw.infoHash ? { infoHash: raw.infoHash.toLowerCase() } : {}),
       ...(raw.fileIdx !== undefined ? { fileIdx: raw.fileIdx } : {}),
     };

@@ -12,13 +12,17 @@ describe('Source Parser', () => {
 
     const parsed = SourceParser.parseStream(raw, 0, 'Torrentio');
     expect(parsed.sourceType).toBe('torrent');
+    expect(parsed.kind).toBe('torrent');
     expect(parsed.isPlayable).toBe(true);
     expect(parsed.resolution).toBe('4K');
     expect(parsed.qualityBadge).toBe('4K UHD');
+    expect(parsed.resolutionLabel).toBe('4K UHD');
     expect(parsed.codec).toBe('HEVC/x265');
     expect(parsed.audio).toBe('Dolby Atmos');
     expect(parsed.seeders).toBe(142);
     expect(parsed.fileSizeText).toContain('18.4');
+    expect(parsed.fileSize).toContain('18.4');
+    expect(parsed.providerName).toBe('Torrentio');
     expect(parsed.infoHash).toBe('4a2b9f87c1234567890abcdef1234567890abcde');
     expect(parsed.fileIdx).toBe(0);
   });

@@ -128,27 +128,36 @@ export interface HomeCatalog {
 
 // Source & Playback types
 export type SourceType = 'direct' | 'torrent' | 'unsupported';
+export type SourceKind = 'direct_url' | 'torrent' | 'unsupported';
 
 export interface ParsedSource {
   id: string;
   sourceType: SourceType;
+  kind: SourceKind;
   provider: string;
+  providerName: string;
   name: string;
   title: string;
+  rawTitle: string;
   resolution: string;      // e.g. "4K", "1080p", "720p"
   qualityBadge: string;    // e.g. "4K UHD", "1080p FHD"
+  resolutionLabel: string; // alias for qualityBadge / mobile UI
   codec: string;           // e.g. "x265", "x264", "HEVC"
   audio: string;           // e.g. "5.1", "7.1", "Atmos"
+  hdr?: string;            // e.g. "HDR10", "Dolby Vision"
   fileSizeText: string;    // e.g. "2.4 GB"
+  fileSize: string;        // alias for fileSizeText
   fileSizeBytes: number;
   seeders: number;
   peers: number;
   isPlayable: boolean;
   // Direct stream
   streamUrl?: string;
+  directUrl?: string;      // alias for streamUrl
   // Torrent swarm
   infoHash?: string;
   fileIdx?: number;
+  contentType: 'hls' | 'mp4' | 'other_supported';
 }
 
 export interface StreamDiscoveryResult {
