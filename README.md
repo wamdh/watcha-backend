@@ -73,7 +73,14 @@ npm run typecheck
 - `GET /api/v1/series/:id` — Complete series details with seasons summary
 - `GET /api/v1/series/:id/seasons/:seasonNumber` — Season and episode details
 - `GET /api/v1/search?q=query&type=all|movie|tv&page=1` — Multilingual search
-- `GET /api/v1/sources/:mediaType/:id?season=X&episode=Y` — Source discovery (direct & torrents)
+- `GET /api/v1/sources/:mediaType/:id?season=X&episode=Y` — Source discovery (direct & torrents with upstream tracker extraction)
+
+---
+
+## 📱 Mobile Client Integration (WATCHA 0.2)
+- **Progressive Playback Contract**: Source discovery returns full `infoHash`, `fileIdx`, `trackers`, `fileSizeBytes`, `resolution`, and `codec`.
+- **Decoupled Architecture**: Video bytes stream directly from the P2P network to Android loopback; Render handles discovery & metadata only.
+- **Upstream Trackers**: High-speed Tier-1 public trackers are enriched for robust peer discovery.
 
 ---
 
