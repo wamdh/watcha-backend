@@ -7,6 +7,8 @@ export interface StremioStreamRaw {
   url?: string;
   infoHash?: string;
   fileIdx?: number;
+  sources?: string[];
+  subtitles?: any[];
   behaviorHints?: {
     bingeGroup?: string;
     proxyHeaders?: Record<string, string>;

@@ -157,6 +157,8 @@ export interface ParsedSource {
   // Torrent swarm
   infoHash?: string;
   fileIdx?: number;
+  trackers?: string[];
+  rawStream?: any;
   contentType: 'hls' | 'mp4' | 'other_supported';
 }
 

@@ -104,6 +104,20 @@ export class SourceParser {
       contentType = 'hls';
     }
 
+    // 10. Upstream trackers
+    const trackers: string[] = [];
+    if (Array.isArray(raw.sources)) {
+      for (const s of raw.sources) {
+        if (typeof s === 'string') {
+          if (s.startsWith('tracker:')) {
+            trackers.push(s.replace('tracker:', ''));
+          } else if (/^https?:\/\/|^udp:\/\//i.test(s)) {
+            trackers.push(s);
+          }
+        }
+      }
+    }
+
     return {
       id: `src_${sourceType}_${index}_${raw.infoHash || Math.random().toString(36).substring(2, 8)}`,
       sourceType,
@@ -126,6 +140,8 @@ export class SourceParser {
       peers: 0,
       isPlayable,
       contentType,
+      ...(trackers.length > 0 ? { trackers } : {}),
+      rawStream: raw,
       ...(raw.url ? { streamUrl: raw.url, directUrl: raw.url } : {}),
       ...(raw.infoHash ? { infoHash: raw.infoHash.toLowerCase() } : {}),
       ...(raw.fileIdx !== undefined ? { fileIdx: raw.fileIdx } : {}),
